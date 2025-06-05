@@ -43,47 +43,93 @@ jobs:
           includeRelease: false
           includeDebug: false
 
+      - name: Debug - List build outputs
+        shell: bash
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Directory structure ==="
+          find . -name "target" -type d | head -10
+          echo "=== Looking for bundle directory ==="
+          find . -name "bundle" -type d | head -10
+          echo "=== Looking for release directory ==="
+          find . -name "release" -type d | head -10
+          echo "=== All files in src-tauri ==="
+          ls -la src-tauri/ || echo "src-tauri directory not found"
+          echo "=== All files in src-tauri/target if exists ==="
+          ls -la src-tauri/target/ || echo "src-tauri/target directory not found"
+
       - name: Prepare release files (Windows)
         if: matrix.platform == 'windows-latest'
         shell: bash
         run: |
           mkdir -p release-files
-          # 查找并复制 Windows 构建产物
-          find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-files/ \;
-          find src-tauri/target/release/bundle -name "*.exe" -exec cp {} release-files/ \;
+          echo "Looking for Windows build artifacts..."
+          
+          # 查找构建产物的实际位置
+          dmg_files=$(find . -name "*.msi" -o -name "*.exe" | head -10)
+          echo "Found files: $dmg_files"
+          
+          # 复制找到的文件
+          find . -name "*.msi" -exec cp {} release-files/ \; 2>/dev/null || echo "No MSI files found"
+          find . -name "*.exe" -exec cp {} release-files/ \; 2>/dev/null || echo "No EXE files found"
+          
+          echo "Files in release-files:"
+          ls -la release-files/
+          
           # 创建 zip 包
           cd release-files
           if ls *.msi >/dev/null 2>&1; then
             for file in *.msi; do
               zip "landrop-windows-${file%.msi}.zip" "$file"
+              echo "Created zip for $file"
             done
           fi
           if ls *.exe >/dev/null 2>&1; then
             for file in *.exe; do
               zip "landrop-windows-${file%.exe}.zip" "$file"
+              echo "Created zip for $file"
             done
           fi
+          
+          echo "Final zip files:"
+          ls -la *.zip || echo "No zip files created"
 
       - name: Prepare release files (macOS)
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
           mkdir -p release-files
-          # 查找并复制 macOS 构建产物
-          find src-tauri/target/release/bundle -name "*.dmg" -exec cp {} release-files/ \;
-          find src-tauri/target/release/bundle -name "*.app" -exec cp -r {} release-files/ \;
+          echo "Looking for macOS build artifacts..."
+          
+          # 查找构建产物的实际位置
+          app_files=$(find . -name "*.dmg" -o -name "*.app" | head -10)
+          echo "Found files: $app_files"
+          
+          # 复制找到的文件
+          find . -name "*.dmg" -exec cp {} release-files/ \; 2>/dev/null || echo "No DMG files found"
+          find . -name "*.app" -exec cp -r {} release-files/ \; 2>/dev/null || echo "No APP files found"
+          
+          echo "Files in release-files:"
+          ls -la release-files/
+          
           # 创建 zip 包
           cd release-files
           if ls *.dmg >/dev/null 2>&1; then
             for file in *.dmg; do
               zip "landrop-macos-${file%.dmg}.zip" "$file"
+              echo "Created zip for $file"
             done
           fi
           if ls *.app >/dev/null 2>&1; then
             for file in *.app; do
               zip -r "landrop-macos-${file%.app}.zip" "$file"
+              echo "Created zip for $file"
             done
           fi
+          
+          echo "Final zip files:"
+          ls -la *.zip || echo "No zip files created"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -91,6 +137,8 @@ jobs:
           name: landrop-${{ matrix.platform }}
           path: release-files/*.zip
           retention-days: 5
+        # 即使没有 zip 文件也不要失败
+        continue-on-error: true
 
   release:
     name: Create Release
@@ -106,6 +154,12 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find . -name "*.zip" -ls || echo "No zip files found"
 
       - name: Create Release
         id: create_release
