@@ -1,5 +1,9 @@
 # LanDrop
 
+![Build Status](https://github.com/zhoucq/landrop/actions/workflows/build.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-0.1.0-green.svg)
+
 一个基于 Tauri 的局域网文件和内容传输工具，支持设备自动发现和无缝文件传输。
 
 ## 功能特性
