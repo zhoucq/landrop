@@ -34,10 +34,11 @@ jobs:
       - name: Install app dependencies
         run: npm install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         with:
-          tagName: v__VERSION__ # 版本格式
-          releaseName: "LanDrop v__VERSION__"
+          tagName: ${{ github.ref_name }}
+          releaseName: "LanDrop ${{ github.ref_name }}"
           releaseBody: "查看 [CHANGELOG.md](https://github.com/zhoucq/landrop/blob/main/CHANGELOG.md) 获取详细信息。"
           releaseDraft: true
           prerelease: false 
