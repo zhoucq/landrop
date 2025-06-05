@@ -36,7 +36,11 @@ jobs:
 
       - uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 使用我们创建的PAT而不是默认的GITHUB_TOKEN
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
-          # 禁用自动创建GitHub Release
-          releaseId: "" 
+          tagName: v__VERSION__ # 版本格式
+          releaseName: "LanDrop v__VERSION__"
+          releaseBody: "查看 [CHANGELOG.md](https://github.com/zhoucq/landrop/blob/main/CHANGELOG.md) 获取详细信息。"
+          releaseDraft: true
+          prerelease: false 
