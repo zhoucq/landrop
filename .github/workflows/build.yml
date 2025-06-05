@@ -35,9 +35,6 @@ jobs:
         run: npm install
 
       - uses: tauri-apps/tauri-action@v0
-        env:
-          # 使用我们创建的PAT而不是默认的GITHUB_TOKEN
-          GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
           tagName: v__VERSION__ # 版本格式
           releaseName: "LanDrop v__VERSION__"
