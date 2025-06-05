@@ -66,34 +66,42 @@ jobs:
           mkdir -p release-files
           echo "Looking for Windows build artifacts..."
           
-          # 查找构建产物的实际位置
-          dmg_files=$(find . -name "*.msi" -o -name "*.exe" | head -10)
-          echo "Found files: $dmg_files"
+          # 查找构建产物的实际位置，排除 node_modules
+          msi_files=$(find . -name "*.msi" -not -path "*/node_modules/*" | head -10)
+          exe_files=$(find . -name "*.exe" -not -path "*/node_modules/*" -not -name "esbuild.exe" | head -10)
+          echo "Found MSI files: $msi_files"
+          echo "Found EXE files: $exe_files"
           
           # 复制找到的文件
-          find . -name "*.msi" -exec cp {} release-files/ \; 2>/dev/null || echo "No MSI files found"
-          find . -name "*.exe" -exec cp {} release-files/ \; 2>/dev/null || echo "No EXE files found"
+          find . -name "*.msi" -not -path "*/node_modules/*" -exec cp {} release-files/ \; 2>/dev/null || echo "No MSI files found"
+          find . -name "*.exe" -not -path "*/node_modules/*" -not -name "esbuild.exe" -exec cp {} release-files/ \; 2>/dev/null || echo "No EXE files found"
           
           echo "Files in release-files:"
           ls -la release-files/
-          
-          # 创建 zip 包
+
+      - name: Create Windows zip packages
+        if: matrix.platform == 'windows-latest'
+        shell: powershell
+        run: |
           cd release-files
-          if ls *.msi >/dev/null 2>&1; then
-            for file in *.msi; do
-              zip "landrop-windows-${file%.msi}.zip" "$file"
-              echo "Created zip for $file"
-            done
-          fi
-          if ls *.exe >/dev/null 2>&1; then
-            for file in *.exe; do
-              zip "landrop-windows-${file%.exe}.zip" "$file"
-              echo "Created zip for $file"
-            done
-          fi
           
-          echo "Final zip files:"
-          ls -la *.zip || echo "No zip files created"
+          # 为 MSI 文件创建 zip 包
+          Get-ChildItem -Filter "*.msi" | ForEach-Object {
+            $zipName = "landrop-windows-$($_.BaseName).zip"
+            Compress-Archive -Path $_.Name -DestinationPath $zipName -Force
+            Write-Host "Created zip: $zipName"
+          }
+          
+          # 为 EXE 文件创建 zip 包  
+          Get-ChildItem -Filter "*.exe" | ForEach-Object {
+            $zipName = "landrop-windows-$($_.BaseName).zip"
+            Compress-Archive -Path $_.Name -DestinationPath $zipName -Force
+            Write-Host "Created zip: $zipName"
+          }
+          
+          # 显示最终的 zip 文件
+          Write-Host "Final zip files:"
+          Get-ChildItem -Filter "*.zip" | ForEach-Object { Write-Host $_.Name }
 
       - name: Prepare release files (macOS)
         if: matrix.platform == 'macos-latest'
