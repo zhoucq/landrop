@@ -43,12 +43,53 @@ jobs:
           includeRelease: false
           includeDebug: false
 
+      - name: Prepare release files (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p release-files
+          # 查找并复制 Windows 构建产物
+          find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-files/ \;
+          find src-tauri/target/release/bundle -name "*.exe" -exec cp {} release-files/ \;
+          # 创建 zip 包
+          cd release-files
+          if ls *.msi >/dev/null 2>&1; then
+            for file in *.msi; do
+              zip "landrop-windows-${file%.msi}.zip" "$file"
+            done
+          fi
+          if ls *.exe >/dev/null 2>&1; then
+            for file in *.exe; do
+              zip "landrop-windows-${file%.exe}.zip" "$file"
+            done
+          fi
+
+      - name: Prepare release files (macOS)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          mkdir -p release-files
+          # 查找并复制 macOS 构建产物
+          find src-tauri/target/release/bundle -name "*.dmg" -exec cp {} release-files/ \;
+          find src-tauri/target/release/bundle -name "*.app" -exec cp -r {} release-files/ \;
+          # 创建 zip 包
+          cd release-files
+          if ls *.dmg >/dev/null 2>&1; then
+            for file in *.dmg; do
+              zip "landrop-macos-${file%.dmg}.zip" "$file"
+            done
+          fi
+          if ls *.app >/dev/null 2>&1; then
+            for file in *.app; do
+              zip -r "landrop-macos-${file%.app}.zip" "$file"
+            done
+          fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: landrop-${{ matrix.platform }}
-          path: |
-            src-tauri/target/release/bundle/**/*
+          path: release-files/*.zip
           retention-days: 5
 
   release:
@@ -71,7 +112,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            landrop-*/src-tauri/target/release/bundle/**/*
+            landrop-*/*.zip
           draft: false
           prerelease: false
           generate_release_notes: true
