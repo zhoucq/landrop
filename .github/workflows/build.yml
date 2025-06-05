@@ -36,19 +36,24 @@ jobs:
       - name: Install app dependencies
         run: npm install
 
+      - name: Build Tauri app (no release)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: tauri-apps/tauri-action@v0
+        with:
+          includeRelease: false
+          includeDebug: false
+
       - name: Build and Release Tauri app
+        if: startsWith(github.ref, 'refs/tags/')
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # 只在推送标签时创建 release
           tagName: ${{ github.ref_name }}
           releaseName: "LanDrop ${{ github.ref_name }}"
           releaseBody: "查看 [CHANGELOG.md](https://github.com/zhoucq/landrop/blob/main/CHANGELOG.md) 获取详细信息。"
           releaseDraft: false
           prerelease: false
           includeDebug: false
-          # 只有在标签推送时才包含 release
-          includeRelease: ${{ startsWith(github.ref, 'refs/tags/') }}
-          # 指定要包含的构建产物
+          includeRelease: true
           includeUpdaterJson: false 
