@@ -1,0 +1,37 @@
+[package]
+name = "landrop"
+version = "0.1.0"
+description = "A LAN file and content transfer tool"
+authors = ["Your Name <your.email@example.com>"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = [ "shell-open", "fs-remove-file", "dialog-save", "fs-read-file", "fs-create-dir", "fs-exists", "dialog-open", "fs-read-dir", "fs-copy-file", "fs-write-file", "path-all", "fs-remove-dir", "http-all", "fs-rename-file"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }
+thiserror = "1.0"
+anyhow = "1.0"
+futures = "0.3"
+bytes = "1.5"
+axum = { version = "0.7", features = ["multipart"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+local-ip-address = "0.5"
+rand = "0.8"
+reqwest = { version = "0.11", features = ["json"] }
+dirs = "5.0"
+hostname = "0.3"
+mime_guess = "2.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[[bin]]
+name = "landrop"
+path = "src/main.rs" 
